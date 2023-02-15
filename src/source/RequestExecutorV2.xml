@@ -1,0 +1,15 @@
+<component
+  name="RequestExecutorV2"
+  extends="Task">
+  <interface>
+    <function name="executorV2" />
+    <function name="enqueuePost" />
+    <field
+      id="request"
+      type="node" />
+    <field
+      id="isInitialized"
+      value="false"
+      type="boolean" />
+  </interface>
+</component>

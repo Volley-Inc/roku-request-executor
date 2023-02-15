@@ -1,0 +1,10 @@
+{
+  "name":"roku-request-executor",
+  "version":"0.1.0",
+  "scripts": {
+    "build": "npx bsc"
+  },
+  "devDependencies": {
+    "brighterscript": "^0.61.2"
+  }
+}

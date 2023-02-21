@@ -1,6 +1,7 @@
 const TIMEOUT = 2000000
 const URL = "https://www.googleapis.com/fusiontables/v1/tables"
-const RESTRICTED_API_KEY="AIzaSyCHE-VOfAJZm9ENk51Eo51qTYXZD5pJ7yw"
+const DEBUG = true
+
 sub enqueuePost(request as OBJECT)
   m.top.request = request
 end sub
@@ -106,9 +107,7 @@ sub invokeCallback(callback as OBJECT, responseObject as OBJECT)
   end if
   scene = findScene(callback.sceneName)
   callbackName = callback.functionName
-  #if localCompLib
-    ?`invokeCallback: ${scene.subtype()}#${callback}`
-  #end if
+  if DEBUG then ?`invokeCallback: ${scene.subtype()}#${callback}`
   scene.callFunc(callbackName, responseObject.response.directives)
 end sub
 
@@ -130,7 +129,6 @@ function defaultPostBody(requestType as STRING, additionalBodyFields as OBJECT) 
   bodyObject = {
     "context": {
       "version": fields.version(),
-      "userId": fields.userId(),
       "deviceInfo": fields.modelDetails(),
     },
     "request": {

@@ -1,6 +1,8 @@
 <component
   name="RequestExecutorV2"
   extends="Task">
+  <script type="text/brightscript" uri="pkg:/src/source/Request.xml" />
+  <script type="text/brightscript" uri="pkg:/src/source/RequestExecutorV2.xml" />
   <interface>
     <function name="executorV2" />
     <function name="enqueuePost" />

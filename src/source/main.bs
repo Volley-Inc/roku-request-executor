@@ -5,7 +5,9 @@ sub init()
 end sub
 
 sub loadTest()
-  executorV2().enqueuePost(createGoogleTranslateRequest())
+  for i = 1 to 50
+    executorV2().enqueuePost(createGoogleTranslateRequest())
+  endfor
 end sub
 
 function createGoogleTranslateRequest()

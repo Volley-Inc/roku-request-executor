@@ -1,4 +1,8 @@
 {
-  "rootDir": "src",
-  "autoImportComponentScript": true
+  "rootDir": "./",
+  "autoImportComponentScript": true,
+  "files": [
+    "manifest",
+    "src/**/*"
+  ]
 }

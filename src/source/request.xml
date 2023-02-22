@@ -2,9 +2,9 @@
   name="Request"
   extends="Node">
   <interface>
-    <field
-      id="type"
-      type="string" />
+  <field
+  id="headers"
+  type="assocArray" />
     <field
       id="body"
       type="assocArray" />

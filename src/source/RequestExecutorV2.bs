@@ -1,5 +1,5 @@
 const TIMEOUT = 2000000
-const URL = "https://www.googleapis.com/fusiontables/v1/tables"
+const URL = "https://postman-echo"
 const DEBUG = true
 
 sub enqueuePost(request as OBJECT)
@@ -63,9 +63,9 @@ sub processRequestQueue()
 end sub
 
 function sendRequest(transferObject as OBJECT, request as OBJECT)
-  ?`executeRequest: ${request.type} with transferObject ${transferObject}`
+  ?`executeRequest: ${request} with transferObject ${transferObject}`
   m.requestsInFlight[stri(transferObject.getIdentity()).trim()] = request
-  body = defaultPostBody(request.type, request.body)
+  body = defaultPostBody(request.headers, request.body)
   transferObject.asyncPostFromString(body)
 end function
 
@@ -99,49 +99,44 @@ end function
 
 sub invokeCallback(callback as OBJECT, responseObject as OBJECT)
   if callback = invalid then return
-  if callback.sceneName = invalid or callback.functionName = invalid
-    throw `Callback provided but missing either sceneName or functionName.
-    sceneName: ${callback.sceneName}
+  if callback.componentName = invalid or callback.functionName = invalid
+    throw `Callback provided but missing either componentName or functionName.
+    componentName: ${callback.componentName}
     functionName: ${callback.functionName}`
     return
   end if
-  scene = findScene(callback.sceneName)
+  scene = findComponent(callback.componentName)
   callbackName = callback.functionName
   if DEBUG then ?`invokeCallback: ${scene.subtype()}#${callback}`
   scene.callFunc(callbackName, responseObject.response.directives)
 end sub
 
-function findScene(sceneName as STRING)
+' Only checks for a component one level deep from m.top.getScene() since that is our 
+' internal use case. If you need to find components nested more deeply than that you 
+' could search recursively. Please PR if you do!
+function findComponent(componentName as STRING)
   container = m.top.getScene()
   scene = invalid
   for i = 0 to container.getChildCount() - 1
-    if container.getChild(i).subType() = sceneName
+    if container.getChild(i).subType() = componentName
       scene = container.getChild(i)
     end if
   end for
   if scene = invalid then
-    throw `Couldn't find node for ${sceneName}`
+    throw `Couldn't find node for ${componentName}`
   end if
   return scene
 end function
 
-function defaultPostBody(requestType as STRING, additionalBodyFields as OBJECT) as OBJECT
+function defaultPostBody(bodyFields as OBJECT) as OBJECT
   bodyObject = {
     "context": {
       "version": fields.version(),
       "deviceInfo": fields.modelDetails(),
     },
-    "request": {
-      "type": requestType
-    }
   }
 
-  if m.isNewSession = invalid
-    bodyObject.request.isNewSession = true
-    m.isNewSession = false
-  end if
-
-  if additionalBodyFields <> invalid then
+  if bodyFields <> invalid then
     bodyObject.request.append(additionalBodyFields)
   end if
 

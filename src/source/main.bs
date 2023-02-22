@@ -12,6 +12,7 @@ end sub
 
 function createGoogleTranslateRequest()
   request = CreateObject("roSGNode", "Request")
-  
+  request.headers= { "Content-Type": "application/json" }
+  request.body = { user: "you", password: "123" }
   return request
 end function

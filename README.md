@@ -22,3 +22,12 @@ sequenceDiagram
 
 ### Gif demo
 ![gif of load test executing](https://i.imgur.com/bJOmB5L.gif)
+
+### To-do
+ - migrate to roPM
+    - maybe--not sure how hard this will be
+ -  review documentation to make sure it's still correct
+ - support other http Methods
+   - maybe--we don't have an internal usecase so it's lower priority for me
+ - write unit tests
+   - I'm unfamiliar with unit testing in bs/brs, but this feels valuable to me

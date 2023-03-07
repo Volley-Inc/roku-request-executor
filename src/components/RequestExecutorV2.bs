@@ -1,6 +1,7 @@
 const TIMEOUT = 2000000
-const URL = "https://postman-echo"
+const URL = "https://postman-echo.com/post"
 const DEBUG = true
+const DEBUG_NOISY = false
 
 sub enqueuePost(request as OBJECT)
   m.top.request = request
@@ -9,6 +10,7 @@ end sub
 function executorV2()
   singleton = m.global.executorV2
   if singleton <> invalid then return singleton
+  if DEBUG then ?"Creating executorV2 singleton"
   singleton = createObject("roSGNode", "RequestExecutorV2")
   singleton.functionName = "receiveEvents"
   singleton.control = "RUN"
@@ -58,13 +60,17 @@ end sub
 sub processRequestQueue()
   if m.requestQueue.count() = 0 then return
   if m.availableTransferObjects.count() = 0 then return
+  if DEBUG then ?`Sending request
+  availableTransferObjects: ${m.availableTransferObjects.count()}
+  requests in queue: ${m.requestQueue.count()}
+  requests in flight: ${m.requestsInFlight.count()}
+  `
   nextRequest = m.requestQueue.shift()
   nextTransferObject = m.availableTransferObjects.shift()
   sendRequest(nextTransferObject, nextRequest)
 end sub
 
 function sendRequest(transferObject as OBJECT, request as OBJECT)
-  ?`executeRequest: ${request} with transferObject ${transferObject}`
   m.requestsInFlight[stri(transferObject.getIdentity()).trim()] = request
   body = defaultPostBody(request.body)
   transferObject.setHeaders(request.headers)
@@ -81,9 +87,14 @@ sub processResponse(transferObjectResponse)
     throw `Can not process a transfer object response with an identity of ${transferObjectId} because no transfer object with that identity exists. Something is wrong with the transfer object pool.`
   end if
   m.availableTransferObjects.push(finishedTransferObject)
+  if DEBUG then ?`Receiving response
+  availableTransferObjects: ${m.availableTransferObjects.count()}
+  requests in queue: ${m.requestQueue.count()}
+  requests in flight: ${m.requestsInFlight.count()}
+  `
   response = transferObjectResponse.getString()
-  ?"ResponseCode "transferObjectResponse.getResponseCode()
-  ?"Response "response
+  if DEBUG_NOISY then ?"ResponseCode "transferObjectResponse.getResponseCode()
+  if Debug_NOISY then ?"Response "response
   responseObject = parseJson(response)
   originalRequest = m.requestsInFlight[transferObjectId]
   m.requestsInFlight.delete(transferObjectId)
@@ -107,14 +118,17 @@ sub invokeCallback(callback as OBJECT, responseObject as OBJECT)
     functionName: ${callback.functionName}`
     return
   end if
-  scene = findComponent(callback.componentName)
+  component = findComponent(callback.componentName)
   callbackName = callback.functionName
-  if DEBUG then ?`invokeCallback: ${scene.subtype()}#${callback}`
-  scene.callFunc(callbackName, responseObject.response.directives)
+  if DEBUG_NOISY then ?`invokeCallback: ${component.subtype()}#${callback}`
+  callbackResult = component.callFunc(callbackName, responseObject)
+  if callbackResult = invalid then
+    throw `Callback ${callbackName} on ${component.subtype()} returned invalid. Callbacks must return something (e.g. true) to indicate a function signature match.`
+  end if
 end sub
 
-' Only checks for a component one level deep from m.top.getScene() since that is our 
-' internal use case. If you need to find components nested more deeply than that you 
+' Only checks for a component one level deep from m.top.getScene() since that is our
+' internal use case. If you need to find components nested more deeply than that you
 ' could search recursively. Please PR if you do!
 function findComponent(componentName as STRING)
   container = m.top.getScene()
@@ -139,7 +153,7 @@ function defaultPostBody(bodyFields as OBJECT) as OBJECT
   }
 
   if bodyFields <> invalid then
-    bodyObject.request.append(bodyFields)
+    bodyObject.append(bodyFields)
   end if
 
   body = formatJson(bodyObject)

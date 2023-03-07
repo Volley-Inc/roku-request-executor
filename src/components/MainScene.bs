@@ -1,9 +1,9 @@
 import "GroupOne.bs"
 
 sub init()
-  ?"Hello"
   groupOne = createObject("roSGNode", "GroupOne")
   m.top.getScene().appendChild(groupOne)
   groupOne.setFocus(true)
+  ?"initializing groupone"
   groupOne@.groupOneInit()
 end sub

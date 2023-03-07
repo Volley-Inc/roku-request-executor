@@ -1,17 +1,19 @@
 import "RequestExecutorV2.bs"
 
-sub groupOneInit()
+sub groupOneInit(_=invalid)
+  ? "GroupOne init"
   executorV2().observeField("isInitialized", "loadTest")
 end sub
 
 sub loadTest()
+  ?"Starting load test..."
   for i = 1 to 50
-    executorV2().enqueuePost(createPostRequest())
+    executorV2()@.enqueuePost(createPostRequest())
   end for
 end sub
 
 function createPostRequest()
-  request = CreateObject("roSGNode", "Request")
+  request = createObject("roSGNode", "Request")
   request.headers = { "Content-Type": "application/json" }
   request.body = { randomNumber: StrI(Rnd(55) * 100) }
   request.callBack = {
@@ -22,6 +24,6 @@ function createPostRequest()
 end function
 
 function printResponse(response) as BOOLEAN
-  ? "Response: " + response
+  ? `Response: ${response.data.randomnumber}`
   return true
 end function

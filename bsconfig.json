@@ -1,8 +1,12 @@
 {
-  "rootDir": "./",
+  "rootDir": "./src/",
+  "stagingDir": "./dist/",
+  "retainStagingDir": true,
+  "sourceMap": true,
   "autoImportComponentScript": true,
   "files": [
+    "components/**/*",
     "manifest",
-    "src/**/*"
+    "source/**/*"
   ]
 }

@@ -1,0 +1,6 @@
+<component name="GroupOne" extends="Group">
+  <interface>
+    <function name="printResponse" />
+    <function name="groupOneInit"/>
+  </interface>
+</component>

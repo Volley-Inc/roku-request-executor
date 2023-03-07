@@ -1,0 +1,7 @@
+{
+  "editor.formatOnSave": true,
+  "brightscript.format.formatSingleLineCommentType": "singlequote",
+  "brightscript.format.keywordCase": "lower",
+  "brightscript.format.typeCase": "upper",
+  "brightscript.bsdk": "./node_modules/brighterscript"
+}

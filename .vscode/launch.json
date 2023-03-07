@@ -1,0 +1,19 @@
+{
+  "configurations": [
+    {
+      "name": "BrightScript Debug: Launch",
+      "type": "brightscript",
+      "request": "launch",
+      "host": "${env:ROKU_DEV_TARGET}",
+      "password": "${env:ROKU_DEV_PASSWORD}",
+      "rootDir": "${workspaceFolder}/dist/",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "build bsc",
+      "files": [
+        "manifest",
+        "components/**/*",
+        "source/**/*"
+      ]
+    }
+  ]
+}

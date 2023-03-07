@@ -139,7 +139,7 @@ function defaultPostBody(bodyFields as OBJECT) as OBJECT
   }
 
   if bodyFields <> invalid then
-    bodyObject.request.append(additionalBodyFields)
+    bodyObject.request.append(bodyFields)
   end if
 
   body = formatJson(bodyObject)

@@ -19,3 +19,6 @@ sequenceDiagram
 		note over RequestQueue: no-op
 	end
   ```
+
+### Gif demo
+![gif of load test executing](https://i.imgur.com/bJOmB5L.gif)

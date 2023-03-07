@@ -21,7 +21,8 @@ sequenceDiagram
   ```
 
 ### Gif demo
-![gif of load test executing](https://imgur.com/OsEqDpo.gif)
+[https://i.imgur.com/Rwge8PP.gif](https://i.imgur.com/Rwge8PP.gif)
+![gif of load test executing](https://i.imgur.com/Rwge8PP.gif)
 
 ### To-do
  - migrate to roPM

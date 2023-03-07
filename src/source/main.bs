@@ -6,13 +6,13 @@ end sub
 
 sub loadTest()
   for i = 1 to 50
-    executorV2().enqueuePost(createGoogleTranslateRequest())
+    executorV2().enqueuePost(createPostRequest())
   endfor
 end sub
 
-function createGoogleTranslateRequest()
+function createPostRequest()
   request = CreateObject("roSGNode", "Request")
   request.headers= { "Content-Type": "application/json" }
-  request.body = { user: "you", password: "123" }
+  request.body = { randomNumber: StrI(Rnd(55) * 100) }
   return request
 end function

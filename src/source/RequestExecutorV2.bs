@@ -20,6 +20,7 @@ enum RequestExecutorEvent
   enqueuedRequest = "roSGNodeEvent"
   transferObjectResponse = "roUrlEvent"
 end enum
+
 ' Receives events corresponding to either
 '   * a new request enqueued on this executor
 '   * a response from a transfer object
@@ -65,7 +66,8 @@ end sub
 function sendRequest(transferObject as OBJECT, request as OBJECT)
   ?`executeRequest: ${request} with transferObject ${transferObject}`
   m.requestsInFlight[stri(transferObject.getIdentity()).trim()] = request
-  body = defaultPostBody(request.headers, request.body)
+  body = defaultPostBody(request.body)
+  transferObject.setHeaders(request.headers)
   transferObject.asyncPostFromString(body)
 end function
 
@@ -186,7 +188,6 @@ function createTransferObject(port, url)
 
   transferObject.setPort(port)
   transferObject.setUrl(url)
-  transferObject.setHeaders({ "Content-Type": "application/json" })
   transferObject.retainBodyOnError(true)
   return transferObject
 end function

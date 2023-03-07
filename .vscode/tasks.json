@@ -4,13 +4,7 @@
     {
       "label": "build bsc",
       "type": "shell",
-      "command": "npx bsc",
-      "options": {
-        "env": {
-          "RESTRICTED_API_KEY":"AIzaSyCHE-VOfAJZm9ENk51Eo51qTYXZD5pJ7yw",
-          "DEBUG":"true"
-        }
-      }
+      "command": "npx bsc"
     }
   ]
 }

@@ -1,7 +1,8 @@
 import "RequestExecutorV2.bs"
 
-sub groupOneInit(_=invalid)
+sub groupOneInit(componentReference as OBJECT)
   ? "GroupOne init"
+  m.componentReference = componentReference
   executorV2().observeField("isInitialized", "loadTest")
 end sub
 
@@ -17,7 +18,7 @@ function createPostRequest()
   request.headers = { "Content-Type": "application/json" }
   request.body = { randomNumber: StrI(Rnd(55) * 100) }
   request.callBack = {
-    componentName: "GroupOne"
+    componentReference: m.componentReference
     functionName: "printResponse"
   }
   return request

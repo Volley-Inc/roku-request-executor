@@ -112,37 +112,24 @@ end function
 
 sub invokeCallback(callback as OBJECT, responseObject as OBJECT)
   if callback = invalid then return
-  if callback.componentName = invalid or callback.functionName = invalid
-    throw `Callback provided but missing either componentName or functionName.
-    componentName: ${callback.componentName}
-    functionName: ${callback.functionName}`
+  functionName = callback.functionName
+  componentReference = callback.componentReference
+  if componentReference = invalid or functionName = invalid
+    throw `Callback provided but missing either componentReference or functionName.
+    componentReference: ${componentReference}
+    functionName: ${functionName}`
     return
   end if
-  component = findComponent(callback.componentName)
-  callbackName = callback.functionName
-  if DEBUG_NOISY then ?`invokeCallback: ${component.subtype()}#${callback}`
-  callbackResult = component.callFunc(callbackName, responseObject)
+  if type(componentReference) <> "roSGNode" then
+    throw `Callback componentReference must be of type roSGNode but got ${type(componentReference)}`
+    return
+  end if
+  if DEBUG_NOISY then ?`invokeCallback: ${componentReference.subtype()}#${callback}`
+  callbackResult = componentReference.callFunc(functionName, responseObject)
   if callbackResult = invalid then
-    throw `Callback ${callbackName} on ${component.subtype()} returned invalid. Callbacks must return something (e.g. true) to indicate a function signature match.`
+    throw `Callback ${functionName} on ${componentReference.subtype()} returned invalid. Callbacks must return something (e.g. true) to indicate a function signature match.`
   end if
 end sub
-
-' Only checks for a component one level deep from m.top.getScene() since that is our
-' internal use case. If you need to find components nested more deeply than that you
-' could search recursively. Please PR if you do!
-function findComponent(componentName as STRING)
-  container = m.top.getScene()
-  scene = invalid
-  for i = 0 to container.getChildCount() - 1
-    if container.getChild(i).subType() = componentName
-      scene = container.getChild(i)
-    end if
-  end for
-  if scene = invalid then
-    throw `Couldn't find node for ${componentName}`
-  end if
-  return scene
-end function
 
 function defaultPostBody(bodyFields as OBJECT) as OBJECT
   bodyObject = {

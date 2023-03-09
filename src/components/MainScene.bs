@@ -5,5 +5,5 @@ sub init()
   m.top.getScene().appendChild(groupOne)
   groupOne.setFocus(true)
   ?"initializing groupone"
-  groupOne@.groupOneInit()
+  groupOne@.groupOneInit(groupOne)
 end sub

@@ -1,0 +1,4 @@
+<component
+    name="MainScene"
+    extends="Scene">
+</component>

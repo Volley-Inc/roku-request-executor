@@ -1,0 +1,219 @@
+const TIMEOUT = 2000000
+const URL = "https://postman-echo.com/post"
+const DEBUG = true
+const DEBUG_NOISY = false
+
+sub enqueuePost(request as OBJECT)
+  m.top.request = request
+end sub
+
+function executorV2()
+  singleton = m.global.executorV2
+  if singleton <> invalid then return singleton
+  if DEBUG then ?"Creating executorV2 singleton"
+  singleton = createObject("roSGNode", "RequestExecutorV2")
+  singleton.functionName = "receiveEvents"
+  singleton.control = "RUN"
+  m.global.addFields({ "executorV2": singleton })
+  return singleton
+end function
+
+enum RequestExecutorEvent
+  enqueuedRequest = "roSGNodeEvent"
+  transferObjectResponse = "roUrlEvent"
+end enum
+
+' Receives events corresponding to either
+'   * a new request enqueued on this executor
+'   * a response from a transfer object
+sub receiveEvents()
+  _initRequestExecutorV2()
+  while true
+    event = wait(0, m.requestPort)
+    eventType = type(event)
+    if eventType = RequestExecutorEvent.enqueuedRequest then
+      request = event.getData()
+      if request.subtype() <> "Request" then throw "Expected request to be of type Request but got " + request.subtype()
+      m.requestQueue.push(request)
+      processRequestQueue()
+    else if eventType = RequestExecutorEvent.transferObjectResponse then
+      transferObjectResponse = event
+      processResponse(transferObjectResponse)
+      processRequestQueue()
+    else
+      throw `Unexpected event type ${eventType}`
+    end if
+  end while
+end sub
+
+sub _initRequestExecutorV2()
+  setRequestPort()
+  observeRequestQueue()
+  initializeTransferPool()
+  initializeAvailableTransferObjects()
+  initializeRequestQueue()
+  initializeRequestsInFlight()
+  m.top.isinitialized = true
+end sub
+
+' quit early if there are no requests in the queue or if there are no available transfer objects. Each transfer object will revisit the request queue when it is done to see if there are any more requests to process.
+sub processRequestQueue()
+  if m.requestQueue.count() = 0 then return
+  if m.availableTransferObjects.count() = 0 then return
+  if DEBUG then ?`Sending request
+  availableTransferObjects: ${m.availableTransferObjects.count()}
+  requests in queue: ${m.requestQueue.count()}
+  requests in flight: ${m.requestsInFlight.count()}
+  `
+  nextRequest = m.requestQueue.shift()
+  nextTransferObject = m.availableTransferObjects.shift()
+  sendRequest(nextTransferObject, nextRequest)
+end sub
+
+function sendRequest(transferObject as OBJECT, request as OBJECT)
+  m.requestsInFlight[stri(transferObject.getIdentity()).trim()] = request
+  body = defaultPostBody(request.body)
+  transferObject.setHeaders(request.headers)
+  transferObject.asyncPostFromString(body)
+end function
+
+sub processResponse(transferObjectResponse)
+  if transferObjectResponse = invalid or transferObjectResponse.getSourceIdentity() = invalid then
+    throw "Can not process a transfer object response without a transfer object identity"
+  end if
+  transferObjectId = stri(transferObjectResponse.getSourceIdentity()).trim()
+  finishedTransferObject = getTransferObjectForId(transferObjectId)
+  if finishedTransferObject = invalid then
+    throw `Can not process a transfer object response with an identity of ${transferObjectId} because no transfer object with that identity exists. Something is wrong with the transfer object pool.`
+  end if
+  m.availableTransferObjects.push(finishedTransferObject)
+  if DEBUG then ?`Receiving response
+  availableTransferObjects: ${m.availableTransferObjects.count()}
+  requests in queue: ${m.requestQueue.count()}
+  requests in flight: ${m.requestsInFlight.count()}
+  `
+  response = transferObjectResponse.getString()
+  if DEBUG_NOISY then ?"ResponseCode "transferObjectResponse.getResponseCode()
+  if Debug_NOISY then ?"Response "response
+  responseObject = parseJson(response)
+  originalRequest = m.requestsInFlight[transferObjectId]
+  m.requestsInFlight.delete(transferObjectId)
+  if originalRequest.callback = invalid then return ' No callback to invoke
+  invokeCallback(originalRequest.callback, responseObject)
+end sub
+
+function getTransferObjectForId(transferObjectId as STRING)
+  for i = 0 to m.transferPool.count() - 1
+    mTransferObject = m.transferPool[i]
+    if stri(mTransferObject.getIdentity()).trim() = transferObjectId then return mTransferObject
+  end for
+  return invalid
+end function
+
+sub invokeCallback(callback as OBJECT, responseObject as OBJECT)
+  if callback = invalid then return
+  functionName = callback.functionName
+  componentReference = callback.componentReference
+  if componentReference = invalid or functionName = invalid
+    throw `Callback provided but missing either componentReference or functionName.
+    componentReference: ${componentReference}
+    functionName: ${functionName}`
+    return
+  end if
+  if type(componentReference) <> "roSGNode" then
+    throw `Callback componentReference must be of type roSGNode but got ${type(componentReference)}`
+    return
+  end if
+  if DEBUG_NOISY then ?`invokeCallback: ${componentReference.subtype()}#${callback}`
+  callbackResult = componentReference.callFunc(functionName, responseObject)
+  if callbackResult = invalid then
+    throw `Callback ${functionName} on ${componentReference.subtype()} returned invalid. Callbacks must return something (e.g. true) to indicate a function signature match.`
+  end if
+end sub
+
+function defaultPostBody(bodyFields as OBJECT) as OBJECT
+  bodyObject = {
+    "context": {
+      "version": fields.version(),
+      "deviceInfo": fields.modelDetails(),
+    },
+  }
+
+  if bodyFields <> invalid then
+    bodyObject.append(bodyFields)
+  end if
+
+  body = formatJson(bodyObject)
+  return body
+end function
+
+' We use m.requestPort to:
+'   * receive requests to put in our requestQueue and process
+'   * receive responses from the transfer objects (whether success or failure)
+sub setRequestPort()
+  m.requestPort = createObject("roMessagePort")
+end sub
+
+sub observeRequestQueue()
+  m.top.observeField("request", m.requestPort)
+end sub
+
+sub initializeTransferPool(size = 5)
+  m.transferPool = createObject("roArray", size, false)
+  for i = 1 to size
+    m.transferPool.push(createTransferObject(m.requestPort, URL))
+  end for
+end sub
+
+sub initializeAvailableTransferObjects(size = 5)
+  m.availableTransferObjects = createObject("roArray", size, true)
+  for i = 1 to size
+    m.availableTransferObjects.push(m.transferPool[i - 1])
+  end for
+end sub
+
+sub initializeRequestQueue()
+  m.requestQueue = createObject("roArray", 0, true)
+end sub
+
+' Requests in flight is an associative array of transfer object IDs to requests. We will use this to look up a request when we get a response from a transfer object so that we can invoke its callback if it has one.
+sub initializeRequestsInFlight()
+  m.requestsInFlight = {}
+end sub
+
+function createTransferObject(port, url)
+  transferObject = createObject("roUrlTransfer")
+  transferObject.setCertificatesFile("common:/certs/ca-bundle.crt")
+  transferObject.addHeader("X-Roku-Reserved-Dev-Id", "put your dev ID here")
+  transferObject.initClientCertificates()
+
+  transferObject.setPort(port)
+  transferObject.setUrl(url)
+  transferObject.retainBodyOnError(true)
+  return transferObject
+end function
+
+namespace fields
+  function deviceInfo()
+    if m.deviceInfo = invalid
+      m.deviceInfo = CreateObject("roDeviceInfo")
+    end if
+    return m.deviceInfo
+  end function
+
+  function modelDetails()
+    return deviceInfo().GetModelDetails()
+  end function
+
+  function appInfo()
+    if m.appInfo = invalid
+      m.appInfo = CreateObject("roAppInfo")
+    end if
+    return m.appInfo
+  end function
+
+  function version() as STRING
+    return appInfo().GetVersion()
+  end function
+
+end namespace

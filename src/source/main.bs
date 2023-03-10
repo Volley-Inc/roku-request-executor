@@ -1,0 +1,13 @@
+import "../components/MainScene.bs"
+
+sub main()
+  screen = createObject("roSGScreen")
+  m.global = screen.getGlobalNode()
+  m.port = createObject("roMessagePort")
+  screen.setMessagePort(m.port)
+  screen.createScene("mainScene")
+  screen.show()
+  while(true)
+    wait(0, m.port)
+  end while
+end sub

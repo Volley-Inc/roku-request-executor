@@ -5,7 +5,7 @@ Callback based singleton HTTP client for Roku written in BrighterScript
 
 - Handles a queue of multiple simultaneous requests
 - Safe to call from render thread
-- Singleton, accessible globally
+- proides a singleton, accessible globally
 - Invokes a callback declared at call site with data from request
   - e.g.
     ```
@@ -22,6 +22,7 @@ Callback based singleton HTTP client for Roku written in BrighterScript
       return request
     end function
     ```
+- Throws an exception if a callback was provided but not function signature matches.
 
 ### Lifecycle Sequence Diagram
 ```mermaid

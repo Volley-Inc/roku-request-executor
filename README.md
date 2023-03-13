@@ -8,20 +8,20 @@ Callback based singleton HTTP client for Roku written in BrighterScript
 - Singleton, accessible globally
 - Invokes a callback declared at call site with data from request
   - e.g.
-  ```
+    ```
     executorV2()@.enqueuePost(createPostRequest())
-
-function createPostRequest()
-  request = createObject("roSGNode", "Request")
-  request.headers = { "Content-Type": "application/json" }
-  request.body = { randomNumber: StrI(Rnd(55) * 100) }
-  request.callBack = {
-    componentReference: m.componentReference
-    functionName: "printResponse"
-  }
-  return request
-end function
-```
+    
+    function createPostRequest()
+      request = createObject("roSGNode", "Request")
+      request.headers = { "Content-Type": "application/json" }
+      request.body = { randomNumber: StrI(Rnd(55) * 100) }
+      request.callBack = {
+        componentReference: m.componentReference
+        functionName: "printResponse"
+      }
+      return request
+    end function
+    ```
 
 ### Lifecycle Sequence Diagram
 ```mermaid

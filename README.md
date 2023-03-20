@@ -1,6 +1,9 @@
 # Roku Request Executor
 Callback based singleton HTTP client for Roku written in BrighterScript
 
+## Archived
+ - Development continues at https://github.com/rokucommunity/roku-http
+ 
 ## Requirements
 
 - Handles a queue of multiple simultaneous requests
